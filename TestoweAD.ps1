@@ -1,4 +1,4 @@
-$AzResourceGroupName = "RGWestEurope"
+$AzResourceGroupName = "TESTAD"
 $VirtualNetworkName = "$($AzResourceGroupName)vNet"
 $PublicIpAddrName = "$($AzResourceGroupName)PubIp"
 $vmADName = "WINAD01"
@@ -6,29 +6,29 @@ $vmMGMTName = "WINMGMT01"
 $vmWIN10Name = "WIN1001"
 $adminUsername = "secmaster"
 $Secure_String_Pwd = ConvertTo-SecureString "P@ssword123!@#" -AsPlainText -Force
-$PubIpMyComp = (Invoke-RestMethod ipinfo.io/json).ip
+$PubIpMyComp = "89.64.54.128"
+$SubscriptionId = "0f2b453d-4acb-4ccb-b1ee-b40c82dd875d"
 
+Import-Module AZ
 
-
-Get-AzSubscription -SubscriptionId a7bbf1cf-cf04-494e-ab27-398f92bf16ce | Select-AzSubscription
+Get-AzSubscription -SubscriptionId $SubscriptionId | Select-AzSubscription
 $rg = Get-AzResourceGroup -Name $AzResourceGroupName
 
-#Stworzenie publicznego adresu IP
+Write-Host "Utworzenie publicznego adresu IP." -ForegroundColor Green
 $PublicIpDynamicRez = New-AzResourceGroupDeployment -Name "PublicIpDynamic" -ResourceGroupName $rg.ResourceGroupName `
-    -TemplateFile ".\ARM\TESTAD\CreatPubIp.json" `
-    -location $rg.Location `
+    -TemplateFile ".\CreatPubIp.json" `
     -PublicIpAddr $PublicIpAddrName
 
+Write-Host "Utworzenie wirtualnej sieci." -ForegroundColor Green
 $WirtualnaSiecRez = New-AzResourceGroupDeployment -Name "WirtualnaSiec" -ResourceGroupName $rg.ResourceGroupName `
-    -TemplateFile ".\ARM\TESTAD\dTVNet.json" `
-    -location $rg.Location `
+    -TemplateFile ".\dTVNet.json" `
     -virtualNetworkName $VirtualNetworkName
 
 $vnet = Get-AzVirtualNetwork -ResourceGroupName $rg.ResourceGroupName -Name $VirtualNetworkName
 
+Write-Host "Utworzenie wirtualnej maszyny $vmADName." -ForegroundColor Green
 $WirtualnaMaszynaRezAD = New-AzResourceGroupDeployment -Name "WirtualnaMaszynaAD" -ResourceGroupName $rg.ResourceGroupName `
-    -TemplateFile ".\ARM\TESTAD\CreatVM.json" `
-    -location $rg.Location `
+    -TemplateFile ".\CreatVM.json" `
     -subnetName $vnet.Subnets[0].Name `
     -virtualNetworkId $vnet.Id `
     -virtualMachineName $vmADName `
@@ -37,11 +37,12 @@ $WirtualnaMaszynaRezAD = New-AzResourceGroupDeployment -Name "WirtualnaMaszynaAD
     -ImagePublisher "MicrosoftWindowsServer" `
     -ImageOffer "WindowsServer" `
     -ImageSku "2019-datacenter" `
-    -mojeIpComputera $PubIpMyComp
+    -mojeIpComputera $PubIpMyComp `
+    -AsJob
 
-$WirtualnaMaszynaRezMGMT = New-AzResourceGroupDeployment -Name "WirtualnaMaszyna" -ResourceGroupName $rg.ResourceGroupName `
-    -TemplateFile ".\ARM\TESTAD\CreatVM.json" `
-    -location $rg.Location `
+Write-Host "Utworzenie wirtualnej maszyny $vmMGMTName." -ForegroundColor Green
+$WirtualnaMaszynaRezMGMT = New-AzResourceGroupDeployment -Name "WirtualnaMaszynaMGMT" -ResourceGroupName $rg.ResourceGroupName `
+    -TemplateFile ".\CreatVM.json" `
     -subnetName $vnet.Subnets[1].Name `
     -virtualNetworkId $vnet.Id `
     -virtualMachineName $vmMGMTName `
@@ -50,10 +51,12 @@ $WirtualnaMaszynaRezMGMT = New-AzResourceGroupDeployment -Name "WirtualnaMaszyna
     -ImagePublisher "MicrosoftWindowsServer" `
     -ImageOffer "WindowsServer" `
     -ImageSku "2019-datacenter" `
-    -mojeIpComputera $PubIpMyComp
+    -mojeIpComputera $PubIpMyComp `
+    -AsJob
 
-$WirtualnaMaszynaRezWIN10 = New-AzResourceGroupDeployment -Name "WirtualnaMaszyna" -ResourceGroupName $rg.ResourceGroupName `
-    -TemplateFile ".\ARM\TESTAD\CreatVM.json" `
+Write-Host "Utworzenie wirtualnej maszyny $vmWIN10Name." -ForegroundColor Green
+$WirtualnaMaszynaRezWIN10 = New-AzResourceGroupDeployment -Name "WirtualnaMaszynaWIN10" -ResourceGroupName $rg.ResourceGroupName `
+    -TemplateFile ".\CreatVM.json" `
     -subnetName $vnet.Subnets[1].Name `
     -virtualNetworkId $vnet.Id `
     -virtualMachineName $vmWIN10Name `
@@ -62,8 +65,13 @@ $WirtualnaMaszynaRezWIN10 = New-AzResourceGroupDeployment -Name "WirtualnaMaszyn
     -ImagePublisher "MicrosoftWindowsDesktop" `
     -ImageOffer "Windows-10" `
     -ImageSku "20h2-ent" `
-    -mojeIpComputera $PubIpMyComp
+    -mojeIpComputera $PubIpMyComp `
+    -AsJob
 
+Write-Host "Pausa na 45 sekund." -ForegroundColor Green
+Start-Sleep -Seconds 45
+
+Write-Host "Przypisanie publicznego adresu IP do serwera $vmMGMTName." -ForegroundColor Green
 $nic = Get-AzNetworkInterface -Name "$($vmMGMTName)_nic" -ResourceGroupName $RG.ResourceGroupName
 $pip = Get-AzPublicIpAddress -Name "$PublicIpAddrname" -ResourceGroupName $RG.ResourceGroupName
 $nic | Set-AzNetworkInterfaceIpConfig -Name $nic.IpConfigurations.Name -PublicIpAddress $pip | Out-Null

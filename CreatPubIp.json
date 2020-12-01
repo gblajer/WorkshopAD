@@ -1,0 +1,32 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "PublicIpAddr": {
+            "type": "string"
+        }
+    },
+    "variables": {
+        "unikalnanazwa": "[substring(uniqueString(resourceGroup().id),0,4)]"
+    },
+    "resources": [
+        {
+            "apiVersion": "2019-02-01",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "[parameters('PublicIpAddr')]",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "Basic"
+            },
+            "properties": {
+                "publicIPAllocationMethod": "Dynamic",
+                "dnsSettings" : {
+                    "domainNameLabel": "[toLower(concat(parameters('PublicIpAddr'), '-', variables('unikalnanazwa')))]"
+                },
+                "idleTimeoutInMinutes": 4,
+                "publicIpAddressVersion": "IPv4",
+                "ipTags": []
+            }
+        }
+    ]
+}

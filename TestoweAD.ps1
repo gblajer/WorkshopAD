@@ -1,4 +1,4 @@
-$AzResourceGroupName = "TESTAD"
+$AzResourceGroupName = "Podaj swoją RG"
 $VirtualNetworkName = "$($AzResourceGroupName)vNet"
 $PublicIpAddrName = "$($AzResourceGroupName)PubIp"
 $vmADName = "WINAD01"
@@ -6,8 +6,8 @@ $vmMGMTName = "WINMGMT01"
 $vmWIN10Name = "WIN1001"
 $adminUsername = "secmaster"
 $Secure_String_Pwd = ConvertTo-SecureString "P@ssword123!@#" -AsPlainText -Force
-$PubIpMyComp = "89.64.54.128"
-$SubscriptionId = "0f2b453d-4acb-4ccb-b1ee-b40c82dd875d"
+$PubIpMyComp = "Podaj swoje zwnetrze IP"
+$SubscriptionId = "Podaj Id Subskrypcji"
 
 Import-Module AZ
 

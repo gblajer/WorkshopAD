@@ -9,4 +9,4 @@
 7. Wybranie subskrypcji z poziomu portalu oraz Powershell.
 8. Utworzenie Resource Group pod nasze zasoby.
 9. Modyfikacja skryptu powershell
-10.Uruchomienie skryptu do tworzenia środowiska.
+10. Uruchomienie skryptu do tworzenia środowiska.
